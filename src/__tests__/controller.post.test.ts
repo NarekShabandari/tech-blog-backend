@@ -42,14 +42,14 @@ beforeEach(() => vi.clearAllMocks());
 // ─────────────────────────────────────────────────────────────────────────────
 describe("getAllPostsController", () => {
   it("returns 200 with published posts", async () => {
-    getAllPostsModel.mockResolvedValue([mockPost]);
+    getAllPostsModel.mockResolvedValue({ posts: [mockPost] });
     const req = buildReq();
     const res = buildRes();
     const next = buildNext();
 
     await getAllPostsController(req as any, res as any, next);
 
-    expect(getAllPostsModel).toHaveBeenCalledWith(); // default publishedOnly=true
+    expect(getAllPostsModel).toHaveBeenCalledWith(true, undefined, undefined);
     expect(res.status).toHaveBeenCalledWith(200);
     expect(res.json).toHaveBeenCalledWith({ posts: [mockPost] });
   });
@@ -71,7 +71,7 @@ describe("getAllPostsController", () => {
 // ─────────────────────────────────────────────────────────────────────────────
 describe("getMyPostsController", () => {
   it("fetches all posts (including drafts) for the logged-in user", async () => {
-    getAllPostsModel.mockResolvedValue([mockPost]);
+    getAllPostsModel.mockResolvedValue({ posts: [mockPost] });
     const req = buildReq({ session: { user: mockUser } });
     const res = buildRes();
     const next = buildNext();
@@ -79,7 +79,7 @@ describe("getMyPostsController", () => {
     await getMyPostsController(req as any, res as any, next);
 
     // called with false to include unpublished posts
-    expect(getAllPostsModel).toHaveBeenCalledWith(false);
+    expect(getAllPostsModel).toHaveBeenCalledWith(false, undefined, undefined);
     expect(res.status).toHaveBeenCalledWith(200);
     expect(res.json).toHaveBeenCalledWith({ posts: [mockPost] });
   });

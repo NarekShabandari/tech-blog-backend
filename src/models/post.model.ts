@@ -5,6 +5,7 @@ import {
   updatePost,
   deletePost,
   updateImage,
+  getPostsCount,
 } from "../db/queries/posts.js";
 import { generatePost } from "../lib/anthropic.js";
 import { CreatePostInput, Post } from "../types/index.js";
@@ -31,8 +32,37 @@ export const createPostModel = async (
 
 export const getAllPostsModel = async (
   publishedOnly: boolean = true,
-): Promise<Post[]> => {
-  return await getAllPosts({ publishedOnly });
+  page?: number,
+  rows?: number,
+): Promise<{
+  posts: Post[];
+  pagination?: {
+    page: number;
+    rows: number;
+    total: number;
+    totalPages: number;
+  };
+}> => {
+  if (page !== undefined && rows !== undefined) {
+    const offset = (page - 1) * rows;
+    const [posts, total] = await Promise.all([
+      getAllPosts({ publishedOnly, limit: rows, offset }),
+      getPostsCount({ publishedOnly }),
+    ]);
+
+    return {
+      posts,
+      pagination: {
+        page,
+        rows,
+        total,
+        totalPages: Math.ceil(total / rows),
+      },
+    };
+  }
+
+  const posts = await getAllPosts({ publishedOnly });
+  return { posts };
 };
 
 export const getPostBySlugModel = async (slug: string): Promise<Post> => {

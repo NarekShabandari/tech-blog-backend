@@ -57,7 +57,7 @@ async function loggedInAgent() {
 // ─────────────────────────────────────────────────────────────────────────────
 describe("GET /posts", () => {
   it("returns 200 with a list of published posts (no auth required)", async () => {
-    getAllPostsModel.mockResolvedValue([mockPost]);
+    getAllPostsModel.mockResolvedValue({ posts: [mockPost] });
 
     const res = await request(buildApp()).get("/posts");
 
@@ -66,7 +66,7 @@ describe("GET /posts", () => {
   });
 
   it("returns 200 with empty array when there are no posts", async () => {
-    getAllPostsModel.mockResolvedValue([]);
+    getAllPostsModel.mockResolvedValue({ posts: [] });
 
     const res = await request(buildApp()).get("/posts");
 
@@ -85,13 +85,13 @@ describe("GET /posts/my", () => {
   });
 
   it("returns 200 with all posts (including drafts) when authenticated", async () => {
-    getAllPostsModel.mockResolvedValue([mockPost]);
+    getAllPostsModel.mockResolvedValue({ posts: [mockPost] });
     const agent = await loggedInAgent();
 
     const res = await agent.get("/posts/my");
 
     expect(res.status).toBe(200);
-    expect(getAllPostsModel).toHaveBeenCalledWith(false);
+    expect(getAllPostsModel).toHaveBeenCalledWith(false, undefined, undefined);
     expect(res.body.posts).toHaveLength(1);
   });
 });

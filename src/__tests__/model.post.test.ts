@@ -73,15 +73,16 @@ describe("getAllPostsModel", () => {
     const result = await getAllPostsModel();
 
     expect(getAllPosts).toHaveBeenCalledWith({ publishedOnly: true });
-    expect(result).toEqual([mockPost]);
+    expect(result).toEqual({ posts: [mockPost] });
   });
 
   it("fetches all posts when publishedOnly is false", async () => {
     getAllPosts.mockResolvedValue([mockPost]);
 
-    await getAllPostsModel(false);
+    const result = await getAllPostsModel(false);
 
     expect(getAllPosts).toHaveBeenCalledWith({ publishedOnly: false });
+    expect(result).toEqual({ posts: [mockPost] });
   });
 });
 

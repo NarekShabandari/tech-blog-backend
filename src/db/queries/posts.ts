@@ -38,17 +38,53 @@ export const createPost = async ({
   return rows[0];
 };
 
-export const getAllPosts = async ({ publishedOnly = true } = {}): Promise<
-  Post[]
-> => {
-  const { rows } = await pool.query<Post>(
+export const getAllPosts = async ({
+  publishedOnly = true,
+  limit,
+  offset,
+}: {
+  publishedOnly?: boolean;
+  limit?: number;
+  offset?: number;
+} = {}): Promise<Post[]> => {
+  const queryParts = [
     `SELECT p.*, u.username AS author
         FROM posts p
-        JOIN users u ON u.id = p.author_id
-  ${publishedOnly ? "WHERE p.published = TRUE" : ""}
-  ORDER BY p.created_at DESC`,
-  );
+        JOIN users u ON u.id = p.author_id`,
+  ];
+
+  if (publishedOnly) {
+    queryParts.push("WHERE p.published = TRUE");
+  }
+
+  queryParts.push("ORDER BY p.created_at DESC");
+
+  const params: any[] = [];
+  if (limit !== undefined) {
+    params.push(limit);
+    queryParts.push(`LIMIT $${params.length}`);
+  }
+
+  if (offset !== undefined) {
+    params.push(offset);
+    queryParts.push(`OFFSET $${params.length}`);
+  }
+
+  const { rows } = await pool.query<Post>(queryParts.join(" "), params);
   return rows;
+};
+
+export const getPostsCount = async ({
+  publishedOnly = true,
+}: {
+  publishedOnly?: boolean;
+} = {}): Promise<number> => {
+  const query = publishedOnly
+    ? "SELECT COUNT(*) FROM posts WHERE published = TRUE"
+    : "SELECT COUNT(*) FROM posts";
+
+  const { rows } = await pool.query<{ count: string }>(query);
+  return parseInt(rows[0].count, 10);
 };
 
 export const getPostBySlug = async (slug: string): Promise<Post | null> => {

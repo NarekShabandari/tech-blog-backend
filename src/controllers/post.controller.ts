@@ -38,6 +38,16 @@ const updateImageSchema = z.object({
   title: z.string().min(1).max(500),
 });
 
+const paginationQuerySchema = z.object({
+  page: z.string().regex(/^\d+$/).transform(Number).optional(),
+  rows: z.string().regex(/^\d+$/).transform(Number).optional(),
+}).refine(
+  (data) => (data.page !== undefined && data.rows !== undefined) || (data.page === undefined && data.rows === undefined),
+  {
+    message: "Both page and rows must be provided together or omitted together",
+  }
+);
+
 const updatePostSchema = z
   .object({
     title: z.string().min(1).max(500).optional(),
@@ -60,8 +70,16 @@ export const getAllPostsController = async (
   next: NextFunction,
 ): Promise<void> => {
   try {
-    const posts = await getAllPostsModel();
-    res.status(200).json({ posts });
+    const queryResult = paginationQuerySchema.safeParse(req.query);
+    if (!queryResult.success) {
+      res.status(400).json({ error: queryResult.error.issues });
+      return;
+    }
+
+    const { page, rows } = queryResult.data;
+    const result = await getAllPostsModel(true, page, rows);
+    
+    res.status(200).json(result);
   } catch (error) {
     next(error);
   }
@@ -73,8 +91,16 @@ export const getMyPostsController = async (
   next: NextFunction,
 ): Promise<void> => {
   try {
-    const posts = await getAllPostsModel(false);
-    res.status(200).json({ posts });
+    const queryResult = paginationQuerySchema.safeParse(req.query);
+    if (!queryResult.success) {
+      res.status(400).json({ error: queryResult.error.issues });
+      return;
+    }
+
+    const { page, rows } = queryResult.data;
+    const result = await getAllPostsModel(false, page, rows);
+    
+    res.status(200).json(result);
   } catch (err) {
     next(err);
   }
