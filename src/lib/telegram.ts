@@ -15,9 +15,10 @@ export const sendApprovalRequest = async (
 Please review and approve or reject.
   `.trim();
 
-  await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
+   const response = await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
+    signal: AbortSignal.timeout(10_000),
     body: JSON.stringify({
       chat_id: TELEGRAM_CHAT_ID,
       text: message,
@@ -31,4 +32,10 @@ Please review and approve or reject.
       },
     }),
   });
+
+  if (!response.ok) {
+    throw new Error(
+      `Telegram error ${response.status}: ${await response.text()}`,
+    );
+  }
 };
