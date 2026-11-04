@@ -24,6 +24,10 @@ const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 
 const app = express();
 
+// Behind nginx: use X-Forwarded-For for the client IP so rate limits are
+// per-user instead of shared by everyone (the proxy's IP)
+app.set("trust proxy", Number(process.env.TRUST_PROXY ?? 1));
+
 app.use(morgan("combined"));
 app.use(
   helmet({
@@ -36,9 +40,23 @@ app.use(
   }),
 );
 
+// CLIENT_URL may be a comma-separated list, e.g. "https://haylog.com,https://www.haylog.com"
+const allowedOrigins = (process.env.CLIENT_URL || "http://localhost:3000")
+  .split(",")
+  .map((o) => o.trim().replace(/\/$/, ""));
+const isLocalDevOrigin = (origin: string) =>
+  process.env.NODE_ENV !== "production" &&
+  /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin);
+
 app.use(
   cors({
-    origin: process.env.CLIENT_URL || "http://localhost:3000",
+    // Requests are sent with credentials (refresh cookie), so the origin must
+    // be echoed back exactly — a "*" wildcard is rejected by browsers
+    origin: (origin, callback) =>
+      callback(
+        null,
+        !origin || allowedOrigins.includes(origin) || isLocalDevOrigin(origin),
+      ),
     allowedHeaders: ["Content-Type", "Authorization"],
     credentials: true,
   }),
