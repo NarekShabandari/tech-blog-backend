@@ -10,11 +10,18 @@ const options: swaggerJsdoc.Options = {
     },
     servers: [
       {
-        url: "http://localhost:3000",
+        url: "http://localhost:3001",
         description: "Development server",
       },
     ],
     components: {
+      securitySchemes: {
+        bearerAuth: {
+          type: "http",
+          scheme: "bearer",
+          bearerFormat: "JWT",
+        },
+      },
       schemas: {
         User: {
           type: "object",

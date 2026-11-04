@@ -12,7 +12,7 @@ services:
       POSTGRES_DB: ${POSTGRES_DB}
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./src/db/schema.sql:/docker-entrypoint-initdb.d/schema.sql
+      # - ./src/db/schema.sql:/docker-entrypoint-initdb.d/schema.sql
     ports:
       - "127.0.0.1:5432:5432"
     networks:
@@ -44,19 +44,6 @@ services:
         condition: service_healthy # waits for DB to be ready
     networks:
       - haylog_network
-
-  # placeholder for frontend — add later
-  # frontend:
-  #   build:
-  #     context: ../blog-frontend
-  #     dockerfile: Dockerfile
-  #   container_name: haylog_frontend
-  #   ports:
-  #     - "3000:3000"
-  #   depends_on:
-  #     - backend
-  #   networks:
-  #     - haylog_network
 
 networks:
   haylog_network:

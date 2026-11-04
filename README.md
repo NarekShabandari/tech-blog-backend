@@ -1,13 +1,13 @@
 # Haylog Blog Backend
 
-A TypeScript/Express REST API for a personal blog platform. Supports session-based auth, manual and AI-generated posts, Cloudinary image hosting, and a Telegram-based content approval workflow.
+A TypeScript/Express REST API for a personal blog platform. Supports JWT bearer-token auth, manual and AI-generated posts, Cloudinary image hosting, and a Telegram-based content approval workflow.
 
 ## Tech Stack
 
 - **Runtime:** Node.js 24, TypeScript
 - **Framework:** Express 4
 - **Database:** PostgreSQL 16 (via `pg` / `pg-pool`)
-- **Auth:** Session-based (`express-session` + `connect-pg-simple`)
+- **Auth:** JWT bearer tokens (`jsonwebtoken`)
 - **AI:** Anthropic Claude SDK + private [`@narekshabandari/haylog-blog-prompts`](https://github.com/NarekShabandari/haylog-blog-prompts) package
 - **Images:** Cloudinary + Stability AI
 - **Validation:** Zod
@@ -28,7 +28,7 @@ src/
 │   ├── queries/     # SQL query functions
 │   └── schema.sql   # Database schema
 ├── lib/             # Integrations (Anthropic, Cloudinary, Telegram)
-├── middlewares/     # Auth session guard
+├── middlewares/     # Auth token guard
 ├── models/          # Business logic layer
 ├── routes/          # Express routers
 ├── types/           # Shared TypeScript types
@@ -43,31 +43,31 @@ blogPrompts/         # Private npm package — AI prompt builders
 
 ### Auth — `/auth`
 
-| Method | Path | Auth | Description |
-|--------|------|------|-------------|
-| `POST` | `/auth/register` | — | Register a new user |
-| `POST` | `/auth/login` | — | Log in, starts a session |
-| `POST` | `/auth/logout` | ✓ | Destroy the active session |
-| `GET` | `/auth/me` | ✓ | Return the logged-in user |
+| Method | Path             | Auth | Description                                |
+| ------ | ---------------- | ---- | ------------------------------------------ |
+| `POST` | `/auth/register` | —    | Register a new user                        |
+| `POST` | `/auth/login`    | —    | Log in, returns a JWT                      |
+| `POST` | `/auth/logout`   | ✓    | Logout (stateless — client discards token) |
+| `GET`  | `/auth/me`       | ✓    | Return the logged-in user                  |
 
 ### Posts — `/posts`
 
-| Method | Path | Auth | Description |
-|--------|------|------|-------------|
-| `GET` | `/posts` | — | Get all published posts |
-| `GET` | `/posts/my` | ✓ | Get all posts by the logged-in user (incl. drafts) |
-| `GET` | `/posts/:slug` | — | Get a single post by slug |
-| `POST` | `/posts` | ✓ | Create a post manually |
-| `POST` | `/posts/generate` | ✓ | AI-generate a post (rate limited: 1/12h) |
-| `PATCH` | `/posts/:id` | ✓ | Update a post |
-| `DELETE` | `/posts/:id` | ✓ | Delete a post |
+| Method   | Path              | Auth | Description                                        |
+| -------- | ----------------- | ---- | -------------------------------------------------- |
+| `GET`    | `/posts`          | —    | Get all published posts                            |
+| `GET`    | `/posts/my`       | ✓    | Get all posts by the logged-in user (incl. drafts) |
+| `GET`    | `/posts/:slug`    | —    | Get a single post by slug                          |
+| `POST`   | `/posts`          | ✓    | Create a post manually                             |
+| `POST`   | `/posts/generate` | ✓    | AI-generate a post (rate limited: 1/12h)           |
+| `PATCH`  | `/posts/:id`      | ✓    | Update a post                                      |
+| `DELETE` | `/posts/:id`      | ✓    | Delete a post                                      |
 
 ### Other
 
-| Method | Path | Description |
-|--------|------|-------------|
+| Method | Path                | Description                                               |
+| ------ | ------------------- | --------------------------------------------------------- |
 | `POST` | `/telegram/webhook` | Telegram bot callback — approve or reject generated posts |
-| `GET` | `/api-docs` | Interactive Swagger UI |
+| `GET`  | `/api-docs`         | Interactive Swagger UI                                    |
 
 ---
 
@@ -127,8 +127,8 @@ DB_NAME=
 DB_USER=
 DB_PASSWORD=
 
-# Session
-SESSION_SECRET=
+# JWT (bearer-token auth)
+JWT_SECRET=
 
 # Anthropic (AI post generation)
 ANTHROPIC_API_KEY=
@@ -182,13 +182,13 @@ The backend is available at `http://localhost:3001`.
 
 ## Scripts
 
-| Script | Description |
-|--------|-------------|
-| `npm run dev` | Start with `tsx` in watch mode |
-| `npm run build` | Compile TypeScript to `dist/` |
-| `npm start` | Run the compiled build |
-| `npm test` | Run tests once with Vitest |
-| `npm run test:watch` | Run tests in watch mode |
+| Script                  | Description                    |
+| ----------------------- | ------------------------------ |
+| `npm run dev`           | Start with `tsx` in watch mode |
+| `npm run build`         | Compile TypeScript to `dist/`  |
+| `npm start`             | Run the compiled build         |
+| `npm test`              | Run tests once with Vitest     |
+| `npm run test:watch`    | Run tests in watch mode        |
 | `npm run test:coverage` | Run tests with coverage report |
 
 ---
@@ -202,12 +202,12 @@ GitHub Actions runs on every push to `main`:
 
 Required GitHub repository secrets:
 
-| Secret | Description |
-|--------|-------------|
-| `NPM_TOKEN` | GitHub Packages token to install the private `blogPrompts` package |
-| `SERVER_IP` | Production server IP address |
-| `SERVER_USER` | SSH user on the production server |
-| `SERVER_SSH_KEY` | Private SSH key for the server |
+| Secret           | Description                                                        |
+| ---------------- | ------------------------------------------------------------------ |
+| `NPM_TOKEN`      | GitHub Packages token to install the private `blogPrompts` package |
+| `SERVER_IP`      | Production server IP address                                       |
+| `SERVER_USER`    | SSH user on the production server                                  |
+| `SERVER_SSH_KEY` | Private SSH key for the server                                     |
 
 ---
 

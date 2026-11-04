@@ -6,10 +6,7 @@
   "scripts": {
     "dev": "tsx watch src/server.ts",
     "build": "tsc",
-    "start": "node dist/server.js",
-    "test": "vitest run",
-    "test:watch": "vitest",
-    "test:coverage": "vitest run --coverage"
+    "start": "node dist/server.js"
   },
   "repository": {
     "type": "git",
@@ -29,13 +26,13 @@
     "@narekshabandari/haylog-blog-prompts": "^1.0.0",
     "bcryptjs": "^3.0.3",
     "cloudinary": "^2.10.0",
-    "connect-pg-simple": "^10.0.0",
+    "cookie-parser": "^1.4.7",
     "cors": "^2.8.6",
     "dotenv": "^17.4.2",
     "express": "^4.22.2",
     "express-rate-limit": "^8.5.2",
-    "express-session": "^1.19.0",
     "helmet": "^8.2.0",
+    "jsonwebtoken": "^9.0.3",
     "morgan": "^1.11.0",
     "pg": "^8.21.0",
     "pg-pool": "^3.14.0",
@@ -45,10 +42,10 @@
   },
   "devDependencies": {
     "@types/bcryptjs": "^2.4.6",
-    "@types/connect-pg-simple": "^7.0.3",
+    "@types/cookie-parser": "^1.4.10",
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.6",
-    "@types/express-session": "^1.19.0",
+    "@types/jsonwebtoken": "^9.0.10",
     "@types/morgan": "^1.9.10",
     "@types/node": "^25.9.2",
     "@types/pg": "^8.20.0",

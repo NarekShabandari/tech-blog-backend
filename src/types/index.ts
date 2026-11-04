@@ -5,6 +5,12 @@ export interface User {
   created_at?: Date;
 }
 
+export interface AuthUser {
+  id: string;
+  email: string;
+  username: string;
+}
+
 export interface CreateUserInput {
   email: string;
   username: string;

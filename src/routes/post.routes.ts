@@ -47,6 +47,8 @@ router.get("/", getAllPostsController);
  *   get:
  *     summary: Get all posts by logged in user including drafts
  *     tags: [Posts]
+ *     security:
+ *       - bearerAuth: []
  *     responses:
  *       200:
  *         description: List of user posts
@@ -74,6 +76,8 @@ router.get("/my", requireAuth, getMyPostsController);
  *   post:
  *     summary: AI generate and save a post
  *     tags: [Posts]
+ *     security:
+ *       - bearerAuth: []
  *     requestBody:
  *       required: true
  *       content:
@@ -162,6 +166,8 @@ router.get("/:slug", getPostBySlugController);
  *   post:
  *     summary: Create a post manually
  *     tags: [Posts]
+ *     security:
+ *       - bearerAuth: []
  *     requestBody:
  *       required: true
  *       content:
@@ -213,7 +219,7 @@ router.post("/", requireAuth, postRateLimiter, createPostController);
  *     summary: Update a post
  *     tags: [Posts]
  *     security:
- *       - cookieAuth: []
+ *       - bearerAuth: []
  *     parameters:
  *       - in: path
  *         name: id
@@ -283,7 +289,7 @@ router.patch("/:id", requireAuth, postRateLimiter, updatePostController);
  *     description: Generates a new AI cover image via Pollinations using the supplied title and saves the resulting URL on the post. The caller must own the post.
  *     tags: [Posts]
  *     security:
- *       - cookieAuth: []
+ *       - bearerAuth: []
  *     parameters:
  *       - in: path
  *         name: id
@@ -348,7 +354,7 @@ router.patch("/image/:id", requireAuth, postRateLimiter, updateImageController);
  *     description: Permanently deletes a post. The caller must be the post author.
  *     tags: [Posts]
  *     security:
- *       - cookieAuth: []
+ *       - bearerAuth: []
  *     parameters:
  *       - in: path
  *         name: id

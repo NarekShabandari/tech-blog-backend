@@ -38,15 +38,20 @@ const updateImageSchema = z.object({
   title: z.string().min(1).max(500),
 });
 
-const paginationQuerySchema = z.object({
-  page: z.string().regex(/^\d+$/).transform(Number).optional(),
-  rows: z.string().regex(/^\d+$/).transform(Number).optional(),
-}).refine(
-  (data) => (data.page !== undefined && data.rows !== undefined) || (data.page === undefined && data.rows === undefined),
-  {
-    message: "Both page and rows must be provided together or omitted together",
-  }
-);
+const paginationQuerySchema = z
+  .object({
+    page: z.string().regex(/^\d+$/).transform(Number).optional(),
+    rows: z.string().regex(/^\d+$/).transform(Number).optional(),
+  })
+  .refine(
+    (data) =>
+      (data.page !== undefined && data.rows !== undefined) ||
+      (data.page === undefined && data.rows === undefined),
+    {
+      message:
+        "Both page and rows must be provided together or omitted together",
+    },
+  );
 
 const updatePostSchema = z
   .object({
@@ -78,7 +83,7 @@ export const getAllPostsController = async (
 
     const { page, rows } = queryResult.data;
     const result = await getAllPostsModel(true, page, rows);
-    
+
     res.status(200).json(result);
   } catch (error) {
     next(error);
@@ -99,7 +104,7 @@ export const getMyPostsController = async (
 
     const { page, rows } = queryResult.data;
     const result = await getAllPostsModel(false, page, rows);
-    
+
     res.status(200).json(result);
   } catch (err) {
     next(err);
@@ -137,7 +142,7 @@ export const createPostController = async (
       return;
     }
     const { title, content, published } = result.data;
-    const authorId = req.session.user!.id;
+    const authorId = req.user!.id;
     const post = await createPostModel(authorId, { title, content, published });
     res.status(201).json({ message: "Post created successfully", post });
   } catch (error) {
@@ -165,7 +170,7 @@ export const updatePostController = async (
 
     const { id } = paramsResult.data;
     const { title, content, published } = bodyResult.data;
-    const authorId = req.session.user!.id;
+    const authorId = req.user!.id;
 
     const post = await updatePostModel(id, authorId, {
       title,
@@ -195,7 +200,7 @@ export const updateImageController = async (
     }
     const { id } = paramsResult.data;
     const { title } = bodyResult.data;
-    const authorId = req.session.user!.id;
+    const authorId = req.user!.id;
     const post = await generatePostImage(id, authorId, title);
     res.status(200).json({ message: "Image updated successfully", post });
   } catch (error) {
@@ -214,7 +219,7 @@ export const deletePostController = async (
       return;
     }
     const { id } = result.data;
-    const authorId = req.session.user!.id;
+    const authorId = req.user!.id;
 
     await deletePostModel(id, authorId);
     res.status(200).json({ message: "Post deleted successfully" });
@@ -235,7 +240,7 @@ export const generatePostController = async (
       return;
     }
     const { topic, targetKeyword, audience, tone, published } = result.data;
-    const authorId = req.session.user!.id;
+    const authorId = req.user!.id;
 
     if (!topic || !targetKeyword) {
       res.status(400).json({ error: "topic and targetKeyword are required" });

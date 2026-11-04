@@ -1,5 +1,20 @@
 import { Router } from "express";
-import { register, login, logout, me } from "../controllers/auth.controller.js";
+import {
+  register,
+  login,
+  logout,
+  me,
+  refreshToken,
+} from "../controllers/auth.controller.js";
+import { requireAuth } from "../middlewares/auth.middleware.js";
+import rateLimit from "express-rate-limit";
+
+// Slows down password guessing on login/register
+const authRateLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 10,
+  message: { error: "Too many attempts, please try again later" },
+});
 
 const router = Router();
 
@@ -40,6 +55,9 @@ const router = Router();
  *                   type: string
  *                 user:
  *                   $ref: '#/components/schemas/User'
+ *                 accessToken:
+ *                   type: string
+ *                   description: Short-lived JWT to send as Authorization Bearer token. A refresh token is also set as an httpOnly cookie.
  *       400:
  *         description: Validation error
  *         content:
@@ -47,7 +65,7 @@ const router = Router();
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.post("/register", register);
+router.post("/register", authRateLimiter, register);
 
 /**
  * @swagger
@@ -72,7 +90,7 @@ router.post("/register", register);
  *                 example: password123
  *     responses:
  *       200:
- *         description: Login successful — sets session cookie
+ *         description: Login successful — returns a Bearer token
  *         content:
  *           application/json:
  *             schema:
@@ -82,20 +100,30 @@ router.post("/register", register);
  *                   type: string
  *                 user:
  *                   $ref: '#/components/schemas/User'
+ *                 accessToken:
+ *                   type: string
+ *                   description: Short-lived JWT to send as Authorization Bearer token. A refresh token is also set as an httpOnly cookie.
  *       400:
  *         description: Validation error
  *         content:
  *           application/json:
  *             schema:
  *               $ref: '#/components/schemas/Error'
+ *       401:
+ *         description: Invalid credentials
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
  */
-router.post("/login", login);
+router.post("/login", authRateLimiter, login);
 
 /**
  * @swagger
  * /auth/logout:
  *   post:
  *     summary: Log out and end session
+ *     description: Revokes the refresh token from the cookie and clears the cookie.
  *     tags: [Auth]
  *     responses:
  *       200:
@@ -107,22 +135,47 @@ router.post("/login", login);
  *               properties:
  *                 message:
  *                   type: string
+ */
+router.post("/logout", logout);
+
+/**
+ * @swagger
+ * /auth/refresh:
+ *   post:
+ *     summary: Get a new access token
+ *     description: Uses the httpOnly refreshToken cookie to issue a new access token. The refresh token is rotated (single-use) and a new cookie is set.
+ *     tags: [Auth]
+ *     responses:
+ *       200:
+ *         description: New access token issued
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 accessToken:
+ *                   type: string
+ *                   description: Short-lived JWT to send as Authorization Bearer token
+ *                 user:
+ *                   $ref: '#/components/schemas/User'
  *       401:
- *         description: Unauthorized
+ *         description: Missing, expired, or already used refresh token
  *         content:
  *           application/json:
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.post("/logout", logout);
+router.post("/refresh", refreshToken);
 
 /**
  * @swagger
  * /auth/me:
  *   get:
  *     summary: Get the currently authenticated user
- *     description: Returns the user object stored in the active session. Requires an active session cookie.
+ *     description: Returns the user identified by the supplied Bearer token.
  *     tags: [Auth]
+ *     security:
+ *       - bearerAuth: []
  *     responses:
  *       200:
  *         description: The authenticated user
@@ -142,6 +195,6 @@ router.post("/logout", logout);
  *             example:
  *               error: Unauthorized
  */
-router.get("/me", me);
+router.get("/me", requireAuth, me);
 
 export default router;
