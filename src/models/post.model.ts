@@ -76,11 +76,13 @@ export const updatePostModel = async (
   authorId: string,
   fields: Partial<Pick<Post, "title" | "content" | "published">>,
 ): Promise<Post> => {
+  const updateFields: Partial<Pick<Post, "title" | "content" | "published" | "slug">> = { ...fields };
+  
   if (fields.title) {
-    (fields as any).slug = generateSlug(fields.title);
+    updateFields.slug = generateSlug(fields.title);
   }
 
-  const post = await updatePost(id, authorId, fields);
+  const post = await updatePost(id, authorId, updateFields);
   if (!post) throw new Error("Post not found or not authorized");
   return post;
 };

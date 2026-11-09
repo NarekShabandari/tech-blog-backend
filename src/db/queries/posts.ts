@@ -102,15 +102,46 @@ export const getPostBySlug = async (slug: string): Promise<Post | null> => {
 export const updatePost = async (
   id: string,
   authorId: string,
-  fields: Partial<Pick<Post, "title" | "content" | "published">>,
+  fields: Partial<Pick<Post, "title" | "content" | "published" | "slug">>,
 ) => {
-  const { title, content, published } = fields;
-  const { rows } = await pool.query<Post>(
-    `UPDATE posts SET title=$1, content=$2, published=$3
-    WHERE id=$4 AND author_id=$5
-    RETURNING *`,
-    [title, content, published, id, authorId],
-  );
+  const setClauses: string[] = [];
+  const values: any[] = [];
+  let paramIndex = 1;
+
+  if (fields.title !== undefined) {
+    setClauses.push(`title=$${paramIndex++}`);
+    values.push(fields.title);
+  }
+
+  if (fields.slug !== undefined) {
+    setClauses.push(`slug=$${paramIndex++}`);
+    values.push(fields.slug);
+  }
+
+  if (fields.content !== undefined) {
+    setClauses.push(`content=$${paramIndex++}`);
+    values.push(fields.content);
+  }
+
+  if (fields.published !== undefined) {
+    setClauses.push(`published=$${paramIndex++}`);
+    values.push(fields.published);
+  }
+
+  // Always add updated_at
+  setClauses.push(`updated_at=CURRENT_TIMESTAMP`);
+
+  // Add WHERE clause parameters
+  values.push(id, authorId);
+
+  const query = `
+    UPDATE posts 
+    SET ${setClauses.join(", ")}
+    WHERE id=$${paramIndex++} AND author_id=$${paramIndex++}
+    RETURNING *
+  `;
+
+  const { rows } = await pool.query<Post>(query, values);
   return rows[0] || null;
 };
 
