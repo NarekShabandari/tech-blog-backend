@@ -12,9 +12,12 @@ import {
 import { requireAuth } from "../middlewares/auth.middleware.js";
 import rateLimit from "express-rate-limit";
 
+const RATE_LIMIT_WINDOW_HOURS = Number(process.env.RATE_LIMIT_WINDOW_HOURS) || 12;
+const RATE_LIMIT_MAX_REQUESTS = Number(process.env.RATE_LIMIT_MAX_REQUESTS) || 2;
+
 const postRateLimiter = rateLimit({
-  windowMs: 12 * 60 * 60 * 1000,
-  limit: 2,
+  windowMs: RATE_LIMIT_WINDOW_HOURS * 60 * 60 * 1000,
+  limit: RATE_LIMIT_MAX_REQUESTS,
   message: { error: "Too many generation requests" },
 });
 
